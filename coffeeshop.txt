@@ -1,0 +1,2417 @@
+Here’s a complete React + React-Bootstrap coffee & drinks delivery website you can clone and deploy.
+
+I’ll give you:
+
+1. Project structure
+2. All main source files (copy-paste ready)
+3. A `README.md` explaining setup, customization, and Vercel deployment
+
+---
+
+## 1. Project structure
+
+You can create this with **Create React App** and then replace/add the files as below:
+
+```text
+coffee-delivery-shop/
+├─ package.json
+├─ public/
+│  └─ index.html
+└─ src/
+   ├─ index.js
+   ├─ App.js
+   ├─ App.css
+   ├─ data/
+   │  └─ menu.js
+   ├─ context/
+   │  └─ CartContext.js
+   ├─ components/
+   │  ├─ MainNavbar.js
+   │  ├─ HeroSection.js
+   │  ├─ FeaturesSection.js
+   │  ├─ MenuGrid.js
+   │  ├─ CartSummary.js
+   │  └─ Footer.js
+   └─ pages/
+      ├─ HomePage.js
+      ├─ MenuPage.js
+      ├─ OrderPage.js
+      ├─ AboutPage.js
+      └─ NotFoundPage.js
+```
+
+The site includes:
+
+* Big **hero** with coffee imagery
+* **Menu** browsing with categories (hot coffee, cold drinks, fruit cocktails)
+* **Cart system** (add/remove items)
+* **Delivery form** that generates a WhatsApp / phone-ready order message
+* Pages: Home, Menu, Order, About
+
+---
+
+## 2. Files
+
+### `package.json`
+
+```json
+{
+  "name": "coffee-delivery-shop",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.0",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": ["react-app", "react-app/jest"]
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+  }
+}
+```
+
+---
+
+### `public/index.html`
+
+(You can keep CRA’s default and just tweak the title.)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BrewGo Coffee Delivery</title>
+    <meta
+      name="description"
+      content="Order specialty coffee, cold drinks, and fruit cocktails with fast delivery by phone or online."
+    />
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+```
+
+---
+
+### `src/index.js`
+
+```js
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
+import App from "./App";
+import { CartProvider } from "./context/CartContext";
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+
+---
+
+### `src/App.js`
+
+```js
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Container from "react-bootstrap/Container";
+import MainNavbar from "./components/MainNavbar";
+import Footer from "./components/Footer";
+import HomePage from "./pages/HomePage";
+import MenuPage from "./pages/MenuPage";
+import OrderPage from "./pages/OrderPage";
+import AboutPage from "./pages/AboutPage";
+import NotFoundPage from "./pages/NotFoundPage";
+
+function App() {
+  return (
+    <div className="app-root d-flex flex-column min-vh-100">
+      <MainNavbar />
+      <main className="flex-grow-1">
+        <Container className="py-4">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Container>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
+```
+
+---
+
+### `src/App.css`
+
+Feel free to customize colors & fonts later.
+
+```css
+:root {
+  --coffee-bg: #0f0a07;
+  --coffee-primary: #c58b5b;
+  --coffee-primary-dark: #9a6635;
+  --coffee-light: #f7eee7;
+  --coffee-text: #faf4ef;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #0b0503;
+}
+
+.app-root {
+  background: radial-gradient(circle at top, #281610 0, #0b0503 45%, #050203 100%);
+  color: var(--coffee-text);
+}
+
+/* Hero styles */
+
+.hero-section {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  min-height: 320px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: stretch;
+  margin-top: 1.5rem;
+}
+
+.hero-overlay {
+  background: linear-gradient(
+    120deg,
+    rgba(5, 2, 3, 0.94),
+    rgba(20, 9, 6, 0.9),
+    rgba(0, 0, 0, 0.2)
+  );
+  color: var(--coffee-text);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-badge {
+  background: rgba(197, 139, 91, 0.18);
+  border: 1px solid rgba(197, 139, 91, 0.45);
+  color: var(--coffee-primary);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-title {
+  font-size: clamp(2.4rem, 3.4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.hero-subtitle {
+  color: #f6e5d6;
+  opacity: 0.9;
+  max-width: 32rem;
+}
+
+.hero-highlight-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(3, 160, 98, 0.18);
+  border: 1px solid rgba(15, 194, 121, 0.35);
+  color: #9effc9;
+  font-size: 0.8rem;
+}
+
+.hero-stat {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.hero-stat-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #f7eee78a;
+}
+
+/* Menu cards */
+
+.menu-card {
+  background: radial-gradient(circle at top left, #22110d 0, #100806 50%, #070303 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(202, 157, 103, 0.28);
+  padding-bottom: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    translate 0.2s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 187, 120, 0.75);
+}
+
+.menu-card img {
+  border-radius: 1.1rem 1.1rem 0.9rem 0.9rem;
+  max-height: 180px;
+  object-fit: cover;
+}
+
+.menu-price {
+  color: var(--coffee-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.menu-chip {
+  font-size: 0.7rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 238, 231, 0.2);
+  color: #f7eee7a0;
+}
+
+/* Buttons */
+
+.btn-coffee-primary {
+  background: linear-gradient(135deg, #c58b5b, #f3b476);
+  border: none;
+  color: #2d140b;
+  font-weight: 600;
+}
+
+.btn-coffee-primary:hover {
+  background: linear-gradient(135deg, #f3b476, #c58b5b);
+  color: #1a0904;
+}
+
+.btn-coffee-outline {
+  border-radius: 999px;
+  border: 1px solid rgba(245, 222, 196, 0.6);
+  color: #f5dcc1;
+}
+
+.btn-coffee-outline:hover {
+  background: rgba(246, 222, 195, 0.14);
+  color: #ffffff;
+}
+
+/* Features */
+
+.feature-card {
+  background: radial-gradient(circle at top, #22110d 0, #100806 55%, #050203 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(208, 158, 99, 0.28);
+}
+
+/* Order form */
+
+.order-form-card {
+  background: radial-gradient(circle at top, #21110d 0, #0f0704 55%, #050203 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(208, 158, 99, 0.28);
+}
+
+/* Footer */
+
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem 0;
+  font-size: 0.85rem;
+  color: #f7eee7a3;
+}
+
+/* Small helper */
+
+.badge-soft {
+  background: rgba(197, 139, 91, 0.16);
+  border: 1px solid rgba(197, 139, 91, 0.36);
+  color: #f5d2aa;
+}
+
+a,
+a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+```
+
+---
+
+### `src/data/menu.js`
+
+Static menu data (you can modify prices, etc).
+
+```js
+const menu = [
+  {
+    id: "espresso",
+    name: "Signature Espresso",
+    category: "Hot Coffee",
+    description: "Double-shot, 100% arabica beans, slow roasted.",
+    price: 2.5,
+    image:
+      "https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Strong", "Classic"]
+  },
+  {
+    id: "latte-vanilla",
+    name: "Vanilla Latte",
+    category: "Hot Coffee",
+    description: "Smooth espresso, steamed milk, Madagascar vanilla.",
+    price: 3.8,
+    image:
+      "https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Best Seller", "Milky"]
+  },
+  {
+    id: "mocha",
+    name: "Mocha Dream",
+    category: "Hot Coffee",
+    description: "Chocolate, espresso, and silky milk with foam art.",
+    price: 4.2,
+    image:
+      "https://images.pexels.com/photos/2396220/pexels-photo-2396220.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Chocolate", "Sweet"]
+  },
+  {
+    id: "iced-americano",
+    name: "Iced Americano",
+    category: "Cold Coffee",
+    description: "Chilled espresso over ice, crisp and refreshing.",
+    price: 3.0,
+    image:
+      "https://images.pexels.com/photos/976338/pexels-photo-976338.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Low Calories"]
+  },
+  {
+    id: "iced-caramel-latte",
+    name: "Iced Caramel Latte",
+    category: "Cold Coffee",
+    description: "Espresso, caramel, cold milk, and ice cubes.",
+    price: 4.1,
+    image:
+      "https://images.pexels.com/photos/3738885/pexels-photo-3738885.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Sweet", "Popular"]
+  },
+  {
+    id: "cold-brew",
+    name: "Cold Brew",
+    category: "Cold Coffee",
+    description: "14-hour slow-steeped cold brew, low acidity.",
+    price: 3.9,
+    image:
+      "https://images.pexels.com/photos/3738883/pexels-photo-3738883.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Smooth"]
+  },
+  {
+    id: "berry-splash",
+    name: "Berry Splash",
+    category: "Fruit Drinks",
+    description: "Strawberry, raspberry, and lime over crushed ice.",
+    price: 4.5,
+    image:
+      "https://images.pexels.com/photos/5531523/pexels-photo-5531523.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Vegan", "Fruity"]
+  },
+  {
+    id: "tropical-sunrise",
+    name: "Tropical Sunrise",
+    category: "Fruit Drinks",
+    description: "Mango, pineapple, passion fruit with a citrus twist.",
+    price: 4.7,
+    image:
+      "https://images.pexels.com/photos/5531524/pexels-photo-5531524.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Summer", "Fresh"]
+  },
+  {
+    id: "virgin-mojito",
+    name: "Virgin Mojito",
+    category: "Mocktails",
+    description: "Mint, lime, sparkling water and a touch of sweetness.",
+    price: 4.0,
+    image:
+      "https://images.pexels.com/photos/5531520/pexels-photo-5531520.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Mocktail", "Refreshing"]
+  },
+  {
+    id: "sunset-cocktail",
+    name: "Sunset Cooler",
+    category: "Mocktails",
+    description: "Orange, grenadine, soda — like a drinkable sunset.",
+    price: 4.3,
+    image:
+      "https://images.pexels.com/photos/248077/pexels-photo-248077.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Mocktail", "Instagrammable"]
+  }
+];
+
+export default menu;
+```
+
+---
+
+### `src/context/CartContext.js`
+
+Simple cart state shared by all pages.
+
+```js
+import React, { createContext, useContext, useMemo, useState } from "react";
+import menuData from "../data/menu";
+
+const CartContext = createContext();
+
+export function CartProvider({ children }) {
+  const [items, setItems] = useState([]);
+
+  const addItem = (id) => {
+    const product = menuData.find((m) => m.id === id);
+    if (!product) return;
+
+    setItems((prev) => {
+      const existing = prev.find((p) => p.id === id);
+      if (existing) {
+        return prev.map((p) =>
+          p.id === id ? { ...p, quantity: p.quantity + 1 } : p
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const updateQuantity = (id, quantity) => {
+    if (quantity <= 0) {
+      removeItem(id);
+      return;
+    }
+    setItems((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, quantity } : p))
+    );
+  };
+
+  const clearCart = () => setItems([]);
+
+  const totals = useMemo(() => {
+    const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
+    const totalPrice = items.reduce(
+      (acc, item) => acc + item.quantity * item.price,
+      0
+    );
+    return { totalItems, totalPrice };
+  }, [items]);
+
+  const value = {
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    totals
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart() {
+  return useContext(CartContext);
+}
+```
+
+---
+
+### `src/components/MainNavbar.js`
+
+```js
+import React from "react";
+import { Link, NavLink } from "react-router-dom";
+import Navbar from "react-bootstrap/Navbar";
+import Container from "react-bootstrap/Container";
+import Nav from "react-bootstrap/Nav";
+import Badge from "react-bootstrap/Badge";
+import { useCart } from "../context/CartContext";
+
+function MainNavbar() {
+  const { totals } = useCart();
+
+  return (
+    <Navbar
+      expand="lg"
+      bg="transparent"
+      variant="dark"
+      className="pt-3 pb-1"
+      sticky="top"
+    >
+      <Container>
+        <Navbar.Brand as={Link} to="/" className="fw-bold">
+          <span role="img" aria-label="coffee">
+            ☕
+          </span>{" "}
+          BrewGo
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="main-nav" />
+        <Navbar.Collapse id="main-nav" className="justify-content-end">
+          <Nav className="align-items-lg-center">
+            <Nav.Link as={NavLink} to="/" end>
+              Home
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/menu">
+              Menu
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/about">
+              About
+            </Nav.Link>
+            <Nav.Link
+              as={NavLink}
+              to="/order"
+              className="d-flex align-items-center gap-2"
+            >
+              Order
+              {totals.totalItems > 0 && (
+                <Badge bg="warning" text="dark">
+                  {totals.totalItems}
+                </Badge>
+              )}
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+}
+
+export default MainNavbar;
+```
+
+---
+
+### `src/components/HeroSection.js`
+
+Big hero with imagery & CTA.
+
+```js
+import React from "react";
+import { Link } from "react-router-dom";
+import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+
+function HeroSection() {
+  const backgroundImage =
+    "https://images.pexels.com/photos/3738888/pexels-photo-3738888.jpeg?auto=compress&cs=tinysrgb&w=1600";
+
+  return (
+    <section
+      className="hero-section"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
+      <div className="hero-overlay">
+        <Row className="g-4">
+          <Col lg={7}>
+            <div className="hero-badge mb-3">
+              <span>Fast coffee delivery</span>
+              <span>•</span>
+              <span>Open 7 days</span>
+            </div>
+            <h1 className="hero-title mb-3">
+              Specialty coffee & fresh drinks
+              <br />
+              delivered to your door.
+            </h1>
+            <p className="hero-subtitle mb-4">
+              Browse our curated menu of hot brews, iced coffees, fruit drinks,
+              and mocktails. Order by phone or directly from the website in a
+              few clicks.
+            </p>
+
+            <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
+              <Button
+                as={Link}
+                to="/menu"
+                size="lg"
+                className="btn-coffee-primary px-4"
+              >
+                Browse full menu
+              </Button>
+              <Button
+                as={Link}
+                to="/order"
+                variant="outline-light"
+                size="lg"
+                className="btn-coffee-outline px-4"
+              >
+                Build your order
+              </Button>
+            </div>
+
+            <div className="d-flex flex-wrap gap-4">
+              <div>
+                <div className="hero-stat">25+ </div>
+                <div className="hero-stat-label">Artisan drinks</div>
+              </div>
+              <div>
+                <div className="hero-stat">30–45 min</div>
+                <div className="hero-stat-label">Average delivery</div>
+              </div>
+              <div className="hero-highlight-pill">
+                <span>Free delivery over $15</span>
+              </div>
+            </div>
+          </Col>
+          <Col
+            lg={5}
+            className="d-none d-lg-flex align-items-end justify-content-end"
+          >
+            {/* Empty column just to let background image breathe on large screens */}
+          </Col>
+        </Row>
+      </div>
+    </section>
+  );
+}
+
+export default HeroSection;
+```
+
+---
+
+### `src/components/FeaturesSection.js`
+
+Showcase quality & delivery focus.
+
+```js
+import React from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+
+const features = [
+  {
+    title: "Roasted this morning",
+    description:
+      "We work with local roasters and grind on demand for bright, aromatic cups."
+  },
+  {
+    title: "Delivery-first experience",
+    description:
+      "Optimized for take-away and delivery with insulated packaging so drinks arrive perfect."
+  },
+  {
+    title: "Order your way",
+    description:
+      "Call us, send WhatsApp, or place an order through the website. Zero friction."
+  }
+];
+
+function FeaturesSection() {
+  return (
+    <section className="mt-5">
+      <Row className="align-items-center g-4">
+        <Col md={6}>
+          <h2 className="fw-semibold mb-3">
+            Crafted like a café,
+            <br />
+            delivered like an app.
+          </h2>
+          <p className="text-muted mb-4" style={{ color: "#f6e5d6b3" }}>
+            BrewGo brings your favorite coffee shop experience home. Fresh beans,
+            barista recipes, and ice-cold fruit drinks, delivered fast and with
+            care.
+          </p>
+        </Col>
+        <Col md={6}>
+          <Row className="g-3">
+            {features.map((f) => (
+              <Col xs={12} key={f.title}>
+                <div className="feature-card p-3">
+                  <h5 className="mb-1">{f.title}</h5>
+                  <p className="mb-0" style={{ color: "#f6e5d6b0" }}>
+                    {f.description}
+                  </p>
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </Col>
+      </Row>
+    </section>
+  );
+}
+
+export default FeaturesSection;
+```
+
+---
+
+### `src/components/MenuGrid.js`
+
+Menu listing with add-to-cart.
+
+```js
+import React, { useMemo, useState } from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Card from "react-bootstrap/Card";
+import Button from "react-bootstrap/Button";
+import Badge from "react-bootstrap/Badge";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
+import ToggleButton from "react-bootstrap/ToggleButton";
+import menuData from "../data/menu";
+import { useCart } from "../context/CartContext";
+
+function MenuGrid({ showCategoryFilter = true, limit }) {
+  const [category, setCategory] = useState("All");
+  const { addItem } = useCart();
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(menuData.map((m) => m.category)))],
+    []
+  );
+
+  const filtered = useMemo(
+    () =>
+      menuData.filter(
+        (item) => category === "All" || item.category === category
+      ),
+    [category]
+  );
+
+  const visibleItems = limit ? filtered.slice(0, limit) : filtered;
+
+  return (
+    <section className="mt-4">
+      {showCategoryFilter && (
+        <div className="mb-3 d-flex flex-wrap gap-2">
+          <ButtonGroup>
+            {categories.map((cat) => (
+              <ToggleButton
+                key={cat}
+                id={`cat-${cat}`}
+                type="radio"
+                variant={cat === category ? "warning" : "outline-light"}
+                name="categories"
+                value={cat}
+                checked={cat === category}
+                onChange={(e) => setCategory(e.currentTarget.value)}
+                size="sm"
+              >
+                {cat}
+              </ToggleButton>
+            ))}
+          </ButtonGroup>
+        </div>
+      )}
+
+      <Row className="g-4">
+        {visibleItems.map((item) => (
+          <Col md={6} lg={4} key={item.id}>
+            <Card className="menu-card h-100 text-light">
+              <Card.Img src={item.image} alt={item.name} />
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <Card.Title className="fs-5">{item.name}</Card.Title>
+                  <span className="menu-price">${item.price.toFixed(2)}</span>
+                </div>
+                <Card.Text className="mb-2" style={{ color: "#f6e5d6b3" }}>
+                  {item.description}
+                </Card.Text>
+                <div className="d-flex flex-wrap gap-2 mb-3">
+                  {item.tags?.map((tag) => (
+                    <span className="menu-chip" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                  <Badge bg="dark" className="border badge-soft">
+                    {item.category}
+                  </Badge>
+                </div>
+                <Button
+                  className="btn-coffee-primary w-100"
+                  onClick={() => addItem(item.id)}
+                >
+                  Add to order
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      {visibleItems.length === 0 && (
+        <p className="mt-3 text-muted">No drinks in this category yet.</p>
+      )}
+    </section>
+  );
+}
+
+export default MenuGrid;
+```
+
+---
+
+### `src/components/CartSummary.js`
+
+Cart view for the Order page.
+
+```js
+import React from "react";
+import Table from "react-bootstrap/Table";
+import Button from "react-bootstrap/Button";
+import { useCart } from "../context/CartContext";
+
+function CartSummary() {
+  const { items, updateQuantity, removeItem, totals } = useCart();
+
+  if (items.length === 0) {
+    return (
+      <div className="p-3 border rounded" style={{ borderColor: "#3a2519" }}>
+        <p className="mb-0 text-muted">
+          Your cart is empty. Add drinks from the menu to start an order.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 border rounded" style={{ borderColor: "#3a2519" }}>
+      <h5 className="mb-3">Your drinks</h5>
+      <Table borderless size="sm" className="align-middle text-light mb-3">
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id}>
+              <td style={{ minWidth: "120px" }}>
+                <div className="fw-semibold">{item.name}</div>
+                <div className="small text-muted">{item.category}</div>
+              </td>
+              <td className="small" style={{ width: "120px" }}>
+                <div className="d-flex align-items-center gap-2">
+                  <Button
+                    variant="outline-light"
+                    size="sm"
+                    className="btn-coffee-outline"
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity - 1)
+                    }
+                  >
+                    −
+                  </Button>
+                  <span>{item.quantity}</span>
+                  <Button
+                    variant="outline-light"
+                    size="sm"
+                    className="btn-coffee-outline"
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity + 1)
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
+              </td>
+              <td className="text-end small">
+                ${(item.price * item.quantity).toFixed(2)}
+                <div className="text-muted">
+                  <small>${item.price.toFixed(2)} / unit</small>
+                </div>
+              </td>
+              <td className="text-end" style={{ width: "40px" }}>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-danger text-decoration-none"
+                  onClick={() => removeItem(item.id)}
+                >
+                  ✕
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+      <div className="d-flex justify-content-between align-items-center">
+        <span className="small text-muted">
+          {totals.totalItems} item(s) in cart
+        </span>
+        <span className="fw-semibold fs-5">
+          Total: ${totals.totalPrice.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default CartSummary;
+```
+
+---
+
+### `src/components/Footer.js`
+
+```js
+import React from "react";
+import Container from "react-bootstrap/Container";
+
+function Footer() {
+  return (
+    <footer className="footer mt-4">
+      <Container className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <span>© {new Date().getFullYear()} BrewGo Coffee Delivery.</span>
+        <span className="small">
+          Order by phone:{" "}
+          <a href="tel:+212600000000" className="text-decoration-underline">
+            +212 6 00 00 00 00
+          </a>{" "}
+          • WhatsApp supported
+        </span>
+      </Container>
+    </footer>
+  );
+}
+
+export default Footer;
+```
+
+Change the phone number to your real one.
+
+---
+
+### `src/pages/HomePage.js`
+
+```js
+import React from "react";
+import HeroSection from "../components/HeroSection";
+import FeaturesSection from "../components/FeaturesSection";
+import MenuGrid from "../components/MenuGrid";
+import { Link } from "react-router-dom";
+import Button from "react-bootstrap/Button";
+
+function HomePage() {
+  return (
+    <>
+      <HeroSection />
+      <FeaturesSection />
+      <section className="mt-5">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h2 className="fw-semibold mb-1">Today’s picks</h2>
+            <p className="mb-0" style={{ color: "#f6e5d6b3" }}>
+              A few favorites our regulars love. See the full menu for more.
+            </p>
+          </div>
+          <Button
+            as={Link}
+            to="/menu"
+            size="sm"
+            variant="outline-light"
+            className="btn-coffee-outline"
+          >
+            View full menu
+          </Button>
+        </div>
+        <MenuGrid showCategoryFilter={false} limit={6} />
+      </section>
+    </>
+  );
+}
+
+export default HomePage;
+```
+
+---
+
+### `src/pages/MenuPage.js`
+
+```js
+import React from "react";
+import MenuGrid from "../components/MenuGrid";
+
+function MenuPage() {
+  return (
+    <>
+      <header className="mb-3">
+        <h1 className="fw-semibold">Menu</h1>
+        <p style={{ color: "#f6e5d6b3" }}>
+          Hot coffee, iced drinks, fruit coolers, and mocktails. Tap{" "}
+          <strong>Add to order</strong> and then head to the Order page to send
+          your delivery details.
+        </p>
+      </header>
+      <MenuGrid />
+    </>
+  );
+}
+
+export default MenuPage;
+```
+
+---
+
+### `src/pages/OrderPage.js`
+
+This is where the **delivery system** lives: order summary + contact form that builds a WhatsApp message (or you can adapt it to email).
+
+```js
+import React, { useMemo, useState } from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
+import CartSummary from "../components/CartSummary";
+import { useCart } from "../context/CartContext";
+
+const WHATSAPP_PHONE = "+212600000000"; // change to your real WhatsApp / phone
+
+function OrderPage() {
+  const { items, totals, clearCart } = useCart();
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    notes: "",
+    deliveryTime: "As soon as possible"
+  });
+  const [feedback, setFeedback] = useState(null);
+
+  const disabled = items.length === 0;
+
+  const orderText = useMemo(() => {
+    if (items.length === 0) return "";
+
+    const lines = [];
+    lines.push("New delivery order from BrewGo website:");
+    lines.push("");
+    lines.push("Items:");
+    items.forEach((item) => {
+      lines.push(
+        `- ${item.name} x${item.quantity} = $${(
+          item.quantity * item.price
+        ).toFixed(2)}`
+      );
+    });
+    lines.push("");
+    lines.push(`Total: $${totals.totalPrice.toFixed(2)}`);
+    lines.push("");
+    lines.push("Customer details:");
+    lines.push(`Name: ${form.name || "—"}`);
+    lines.push(`Phone: ${form.phone || "—"}`);
+    lines.push(`Address: ${form.address || "—"}`);
+    lines.push(`Preferred delivery time: ${form.deliveryTime || "—"}`);
+    lines.push("");
+    if (form.notes) {
+      lines.push("Notes:");
+      lines.push(form.notes);
+    }
+    return lines.join("\n");
+  }, [items, totals.totalPrice, form]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!orderText) return;
+
+    const encoded = encodeURIComponent(orderText);
+    const waUrl = `https://wa.me/${WHATSAPP_PHONE.replace(
+      /[^0-9]/g,
+      ""
+    )}?text=${encoded}`;
+
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+
+    setFeedback({
+      type: "success",
+      message:
+        "We opened WhatsApp with your order. Please review and send it to complete the request."
+    });
+
+    // Optional: you can clear cart AFTER user actually confirms, but for demo we keep it.
+    // clearCart();
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(orderText);
+      setFeedback({
+        type: "info",
+        message:
+          "Order details copied. You can paste them into a phone message or any app."
+      });
+    } catch (err) {
+      setFeedback({
+        type: "danger",
+        message: "Could not copy to clipboard. Please copy manually."
+      });
+    }
+  };
+
+  return (
+    <>
+      <header className="mb-3">
+        <h1 className="fw-semibold">Delivery details</h1>
+        <p style={{ color: "#f6e5d6b3" }}>
+          Fill your information and we’ll receive your order via WhatsApp or
+          phone message. We’ll confirm and send an estimated delivery time.
+        </p>
+      </header>
+
+      {feedback && (
+        <Alert
+          variant={feedback.type}
+          onClose={() => setFeedback(null)}
+          dismissible
+        >
+          {feedback.message}
+        </Alert>
+      )}
+
+      <Row className="g-4">
+        <Col md={5}>
+          <CartSummary />
+        </Col>
+        <Col md={7}>
+          <div className="order-form-card p-3">
+            <Form onSubmit={handleSubmit}>
+              <Form.Group className="mb-3" controlId="orderName">
+                <Form.Label>Your name *</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g. Sara El Amrani"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3" controlId="orderPhone">
+                <Form.Label>Phone number *</Form.Label>
+                <Form.Control
+                  type="tel"
+                  placeholder="e.g. +212 6 ..."
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  required
+                />
+                <Form.Text className="text-muted">
+                  We use this only to confirm and deliver your order.
+                </Form.Text>
+              </Form.Group>
+
+              <Form.Group className="mb-3" controlId="orderAddress">
+                <Form.Label>Delivery address *</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  placeholder="Street, building, floor, apartment, city"
+                  name="address"
+                  value={form.address}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3" controlId="orderTime">
+                <Form.Label>Preferred delivery time</Form.Label>
+                <Form.Select
+                  name="deliveryTime"
+                  value={form.deliveryTime}
+                  onChange={handleChange}
+                >
+                  <option>As soon as possible</option>
+                  <option>Within 30 minutes</option>
+                  <option>Within 1 hour</option>
+                  <option>Schedule for later today</option>
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3" controlId="orderNotes">
+                <Form.Label>Notes</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  placeholder="Door code, extra ice, no sugar, ringing instructions..."
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+
+              <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                <div className="small" style={{ color: "#f6e5d6b3" }}>
+                  Your order total:{" "}
+                  <strong>${totals.totalPrice.toFixed(2)}</strong>
+                </div>
+                <div className="d-flex flex-wrap gap-2">
+                  <Button
+                    type="submit"
+                    disabled={disabled}
+                    className="btn-coffee-primary"
+                  >
+                    Send order via WhatsApp
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-light"
+                    className="btn-coffee-outline"
+                    disabled={disabled}
+                    onClick={handleCopy}
+                  >
+                    Copy order text
+                  </Button>
+                </div>
+              </div>
+
+              {disabled && (
+                <p className="small mt-2 text-warning">
+                  Add some drinks from the menu before sending your order.
+                </p>
+              )}
+            </Form>
+          </div>
+        </Col>
+      </Row>
+    </>
+  );
+}
+
+export default OrderPage;
+```
+
+---
+
+### `src/pages/AboutPage.js`
+
+```js
+import React from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+
+function AboutPage() {
+  return (
+    <section>
+      <Row className="g-4">
+        <Col md={6}>
+          <h1 className="fw-semibold mb-3">About BrewGo</h1>
+          <p style={{ color: "#f6e5d6b3" }}>
+            BrewGo is a delivery-first coffee and drinks bar. We love third-wave
+            coffee, smooth cold brews, and colorful fruit drinks — but we also
+            know you don’t always have time to sit in a café.
+          </p>
+          <p style={{ color: "#f6e5d6b3" }}>
+            That’s why we built a service where you can browse a barista-level
+            menu, customize your order, and get everything at your door in
+            around 30–45 minutes, still hot or perfectly chilled.
+          </p>
+          <p style={{ color: "#f6e5d6b3" }}>
+            We focus on:
+          </p>
+          <ul>
+            <li>Fresh beans and seasonal fruit</li>
+            <li>Careful packaging for delivery</li>
+            <li>Simple ordering by phone, WhatsApp, or this website</li>
+          </ul>
+        </Col>
+        <Col md={6}>
+          <div
+            style={{
+              borderRadius: "1.25rem",
+              overflow: "hidden",
+              border: "1px solid rgba(208,158,99,0.28)"
+            }}
+          >
+            <img
+              src="https://images.pexels.com/photos/3004/coffee-cup-mug-cafe.jpg?auto=compress&cs=tinysrgb&w=1200"
+              alt="Cozy coffee bar"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+        </Col>
+      </Row>
+    </section>
+  );
+}
+
+export default AboutPage;
+```
+
+---
+
+### `src/pages/NotFoundPage.js`
+
+```js
+import React from "react";
+import { Link } from "react-router-dom";
+import Button from "react-bootstrap/Button";
+
+function NotFoundPage() {
+  return (
+    <div className="text-center py-5">
+      <h1 className="fw-semibold mb-2">404</h1>
+      <p style={{ color: "#f6e5d6b3" }}>
+        We couldn’t find that page. Maybe you were looking for the menu?
+      </p>
+      <Button as={Link} to="/menu" className="btn-coffee-primary mt-2">
+        Go to menu
+      </Button>
+    </div>
+  );
+}
+
+export default NotFoundPage;
+```
+
+---
+
+## 3. `README.md` (project explanation + deployment instructions)
+
+Create a file `README.md` at the project root with something like this:
+
+````md
+# BrewGo – Coffee & Drinks Delivery (React + React-Bootstrap)
+
+BrewGo is a delivery-first coffee and beverage shop website built with **React** and **React-Bootstrap**.  
+Customers can:
+
+- Browse a menu of hot coffee, cold drinks, fruit drinks, and mocktails
+- Add items to a cart
+- Fill out delivery information
+- Send the order via **WhatsApp** (or copy the order text for phone / SMS)
+
+The project is ready to be deployed to **Vercel** or any static hosting that supports React builds.
+
+---
+
+## Tech stack
+
+- React 18
+- React-Router v6
+- React-Bootstrap + Bootstrap 5
+- Context API for cart state
+- Static menu data in `src/data/menu.js`
+
+---
+
+## Getting started (cloning & running locally)
+
+### 1. Clone the project
+
+```bash
+git clone https://github.com/YOUR_USERNAME/coffee-delivery-shop.git
+cd coffee-delivery-shop
+````
+
+(If you created it manually, just `cd` into the project folder.)
+
+### 2. Install dependencies
+
+Make sure you have Node.js (LTS) installed, then:
+
+```bash
+npm install
+```
+
+This will install React, React-Bootstrap, React Router, and all other dependencies
+(as defined in `package.json`).
+
+### 3. Run the development server
+
+```bash
+npm start
+```
+
+Open [`http://localhost:3000`](http://localhost:3000) in your browser.
+
+The dev server reloads automatically when you edit files in `src/`.
+
+---
+
+## Project structure
+
+```text
+src/
+  App.js              # Main app with routing
+  App.css             # Global styles and theme
+  index.js            # Entry point, wraps app with Router and CartProvider
+
+  data/
+    menu.js           # Static menu items (id, name, price, category, images)
+
+  context/
+    CartContext.js    # Cart state: add/remove/update items, totals
+
+  components/
+    MainNavbar.js     # Top navigation bar
+    HeroSection.js    # Homepage hero with CTA
+    FeaturesSection.js# Quality / delivery features
+    MenuGrid.js       # Menu cards with category filter
+    CartSummary.js    # Cart table for the Order page
+    Footer.js         # Footer with phone info
+
+  pages/
+    HomePage.js       # Hero + highlights + featured menu
+    MenuPage.js       # Full menu with filter
+    OrderPage.js      # Cart + delivery form + WhatsApp link generator
+    AboutPage.js      # Story & brand info
+    NotFoundPage.js   # 404 page
+```
+
+---
+
+## Customizing the project
+
+### 1. Change contact phone / WhatsApp number
+
+Update the constant in `src/pages/OrderPage.js`:
+
+```js
+const WHATSAPP_PHONE = "+212600000000";
+```
+
+Use your own phone/WhatsApp number. It will be used to build the WhatsApp link.
+
+Also update the phone number shown in the footer in `src/components/Footer.js`:
+
+```jsx
+<a href="tel:+212600000000">+212 6 00 00 00 00</a>
+```
+
+### 2. Edit the menu (drinks, prices, pictures)
+
+Open `src/data/menu.js`.
+
+Each menu item looks like:
+
+```js
+{
+  id: "espresso",
+  name: "Signature Espresso",
+  category: "Hot Coffee",
+  description: "Double-shot, 100% arabica beans, slow roasted.",
+  price: 2.5,
+  image: "https://...",
+  tags: ["Strong", "Classic"]
+}
+```
+
+You can:
+
+* Change `name`, `description`, `price`
+* Replace `image` with your own URLs
+* Add/remove tags
+* Add new items with **unique `id` values**
+
+The `category` field controls how the item appears in the category filter
+(e.g. `"Hot Coffee"`, `"Cold Coffee"`, `"Fruit Drinks"`, `"Mocktails"`).
+
+### 3. Change branding & text
+
+* Homepage hero text: `src/components/HeroSection.js`
+* Feature blocks text: `src/components/FeaturesSection.js`
+* About page story: `src/pages/AboutPage.js`
+* SEO title & description: `public/index.html`
+
+### 4. Colors & theme
+
+Global styles live in `src/App.css`.
+
+You can tweak the color variables:
+
+```css
+:root {
+  --coffee-bg: #0f0a07;
+  --coffee-primary: #c58b5b;
+  --coffee-primary-dark: #9a6635;
+  --coffee-light: #f7eee7;
+  --coffee-text: #faf4ef;
+}
+```
+
+You can change the hero background image in `HeroSection.js`:
+
+```js
+const backgroundImage = "https://your-image-url";
+```
+
+---
+
+## How the delivery / order flow works
+
+1. User browses the **Menu** page (`/menu`) and clicks **“Add to order”** on items.
+2. Items are added to a shared cart via `CartContext`.
+3. On the **Order** page (`/order`), the user sees:
+
+   * A cart summary (items, quantities, total)
+   * A delivery form (name, phone, address, notes, preferred time)
+4. When the user clicks **“Send order via WhatsApp”**:
+
+   * The app builds a text summary containing:
+
+     * All items and quantities
+     * Total price
+     * Delivery details from the form
+   * It opens a `wa.me` link in a new tab with that message pre-filled.
+   * The user just presses **Send** in WhatsApp.
+5. As a fallback, the user can click **“Copy order text”** and paste it into:
+
+   * SMS
+   * A phone notes app
+   * Any messaging app they like
+
+> Note: There is no backend. Orders are sent via WhatsApp only. You can later connect this frontend to a real API or a POS system if needed.
+
+---
+
+## Deploying to Vercel
+
+### 1. Build the project
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+This generates an optimized `build/` folder.
+
+### 2. Deploy via Vercel CLI (option A)
+
+1. Install Vercel CLI globally:
+
+   ```bash
+   npm install -g vercel
+   ```
+
+2. In the project root, run:
+
+   ```bash
+   vercel
+   ```
+
+   * Log in or sign up if needed.
+   * When asked for the build command, you can use:
+
+     * **Build Command:** `npm run build`
+     * **Output Directory:** `build`
+     * **Install Command:** `npm install` (default)
+
+3. For subsequent deployments:
+
+   ```bash
+   vercel --prod
+   ```
+
+### 3. Deploy via Vercel dashboard (option B)
+
+1. Push your project to GitHub/GitLab/Bitbucket.
+2. Go to the Vercel dashboard and click **“New Project”**.
+3. Import your repository.
+4. Configure:
+
+   * Framework preset: **Create React App** (or “Other” with custom commands)
+   * Build Command: `npm run build`
+   * Output Directory: `build`
+5. Click **Deploy**.
+
+Vercel will build the project and give you a live URL, e.g.
+`https://brewgo-coffee.vercel.app`
+
+---
+
+## Modifying / extending the project
+
+Here are some ideas if you want to evolve it:
+
+* Add item customization (size: small/medium/large, extra shots, etc.)
+* Add promotions or coupon codes on the Order page
+* Connect to a backend API to save orders in a database
+* Add admin view for incoming orders
+* Add Google Maps for delivery coverage
+
+The code is organized into **pages** and **components** to make modification and maintenance easier.
+
+---
+
+## License
+
+Feel free to use and adapt this project for personal or commercial coffee / beverage delivery shops. Replace branding, colors, and menu with your own.
+
+```
+
+---
+```
+
+
+Nice upgrade idea 😎 Let’s add **sizes + add-ons** so each drink can be customized before adding to the cart.
+
+Below I’ll show **only the files that need to change or be added**, based on the project I gave you earlier:
+
+* `src/data/menu.js` – add size/add-on metadata
+* `src/context/CartContext.js` – cart now understands options
+* `src/components/ItemCustomizerModal.js` – new modal to pick size/add-ons
+* `src/components/MenuGrid.js` – open the modal instead of instant add
+* `src/components/CartSummary.js` – show selected size/add-ons
+* (Optional) small extra note for `README.md`
+
+You can copy–paste these over your existing files.
+
+---
+
+## 1) `src/data/menu.js` – add sizes & add-ons
+
+I’ll keep prices similar but add metadata used by the customizer.
+
+```js
+// src/data/menu.js
+
+const commonCoffeeSizes = [
+  { id: "S", label: "Small", priceModifier: 0 },
+  { id: "M", label: "Medium", priceModifier: 0.5 },
+  { id: "L", label: "Large", priceModifier: 1 }
+];
+
+const commonCoffeeAddOns = [
+  { id: "extra-shot", label: "Extra espresso shot", price: 0.7 },
+  { id: "oat-milk", label: "Oat / plant-based milk", price: 0.5 },
+  { id: "whipped-cream", label: "Whipped cream", price: 0.4 },
+  { id: "caramel-drizzle", label: "Caramel drizzle", price: 0.5 }
+];
+
+const coldDrinkAddOns = [
+  { id: "extra-fruit", label: "Extra fruit", price: 0.8 },
+  { id: "less-ice", label: "Less ice", price: 0 },
+  { id: "no-sugar", label: "No added sugar", price: 0 }
+];
+
+const menu = [
+  {
+    id: "espresso",
+    name: "Signature Espresso",
+    category: "Hot Coffee",
+    description: "Double-shot, 100% arabica beans, slow roasted.",
+    price: 2.5,
+    image:
+      "https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Strong", "Classic"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "latte-vanilla",
+    name: "Vanilla Latte",
+    category: "Hot Coffee",
+    description: "Smooth espresso, steamed milk, Madagascar vanilla.",
+    price: 3.8,
+    image:
+      "https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Best Seller", "Milky"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "mocha",
+    name: "Mocha Dream",
+    category: "Hot Coffee",
+    description: "Chocolate, espresso, and silky milk with foam art.",
+    price: 4.2,
+    image:
+      "https://images.pexels.com/photos/2396220/pexels-photo-2396220.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Chocolate", "Sweet"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "iced-americano",
+    name: "Iced Americano",
+    category: "Cold Coffee",
+    description: "Chilled espresso over ice, crisp and refreshing.",
+    price: 3.0,
+    image:
+      "https://images.pexels.com/photos/976338/pexels-photo-976338.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Low Calories"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "iced-caramel-latte",
+    name: "Iced Caramel Latte",
+    category: "Cold Coffee",
+    description: "Espresso, caramel, cold milk, and ice cubes.",
+    price: 4.1,
+    image:
+      "https://images.pexels.com/photos/3738885/pexels-photo-3738885.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Sweet", "Popular"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "cold-brew",
+    name: "Cold Brew",
+    category: "Cold Coffee",
+    description: "14-hour slow-steeped cold brew, low acidity.",
+    price: 3.9,
+    image:
+      "https://images.pexels.com/photos/3738883/pexels-photo-3738883.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Smooth"],
+    sizes: commonCoffeeSizes,
+    addOns: commonCoffeeAddOns
+  },
+  {
+    id: "berry-splash",
+    name: "Berry Splash",
+    category: "Fruit Drinks",
+    description: "Strawberry, raspberry, and lime over crushed ice.",
+    price: 4.5,
+    image:
+      "https://images.pexels.com/photos/5531523/pexels-photo-5531523.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Vegan", "Fruity"],
+    sizes: [
+      { id: "R", label: "Regular", priceModifier: 0 },
+      { id: "L", label: "Large", priceModifier: 0.7 }
+    ],
+    addOns: coldDrinkAddOns
+  },
+  {
+    id: "tropical-sunrise",
+    name: "Tropical Sunrise",
+    category: "Fruit Drinks",
+    description: "Mango, pineapple, passion fruit with a citrus twist.",
+    price: 4.7,
+    image:
+      "https://images.pexels.com/photos/5531524/pexels-photo-5531524.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Summer", "Fresh"],
+    sizes: [
+      { id: "R", label: "Regular", priceModifier: 0 },
+      { id: "L", label: "Large", priceModifier: 0.7 }
+    ],
+    addOns: coldDrinkAddOns
+  },
+  {
+    id: "virgin-mojito",
+    name: "Virgin Mojito",
+    category: "Mocktails",
+    description: "Mint, lime, sparkling water and a touch of sweetness.",
+    price: 4.0,
+    image:
+      "https://images.pexels.com/photos/5531520/pexels-photo-5531520.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Mocktail", "Refreshing"],
+    sizes: [
+      { id: "R", label: "Regular", priceModifier: 0 },
+      { id: "L", label: "Pitcher (2–3 ppl)", priceModifier: 3 }
+    ],
+    addOns: coldDrinkAddOns
+  },
+  {
+    id: "sunset-cocktail",
+    name: "Sunset Cooler",
+    category: "Mocktails",
+    description: "Orange, grenadine, soda — like a drinkable sunset.",
+    price: 4.3,
+    image:
+      "https://images.pexels.com/photos/248077/pexels-photo-248077.jpeg?auto=compress&cs=tinysrgb&w=800",
+    tags: ["Mocktail", "Instagrammable"],
+    sizes: [
+      { id: "R", label: "Regular", priceModifier: 0 },
+      { id: "L", label: "Pitcher (2–3 ppl)", priceModifier: 3 }
+    ],
+    addOns: coldDrinkAddOns
+  }
+];
+
+export default menu;
+```
+
+---
+
+## 2) `src/context/CartContext.js` – support size/add-ons
+
+We’ll let `addItem` accept a config with size/add-ons and treat different combos as separate line items.
+
+```js
+// src/context/CartContext.js
+import React, { createContext, useContext, useMemo, useState } from "react";
+import menuData from "../data/menu";
+
+const CartContext = createContext();
+
+function computeUnitPrice(product, sizeId, addOns = []) {
+  let base = product.price;
+
+  if (product.sizes && sizeId) {
+    const size = product.sizes.find((s) => s.id === sizeId);
+    if (size) {
+      base += size.priceModifier || 0;
+    }
+  }
+
+  const addOnsTotal = addOns.reduce((sum, a) => sum + (a.price || 0), 0);
+
+  return base + addOnsTotal;
+}
+
+function buildConfigKey(id, sizeId, addOns = []) {
+  const addOnIds = addOns.map((a) => a.id).sort().join("|");
+  return `${id}__${sizeId || "BASE"}__${addOnIds || "NONE"}`;
+}
+
+export function CartProvider({ children }) {
+  const [items, setItems] = useState([]);
+
+  const addItem = (id, config = {}) => {
+    const product = menuData.find((m) => m.id === id);
+    if (!product) return;
+
+    const { sizeId, sizeLabel, addOns = [], unitPrice } = config;
+    const key = buildConfigKey(id, sizeId, addOns);
+    const pricePerUnit =
+      typeof unitPrice === "number"
+        ? unitPrice
+        : computeUnitPrice(product, sizeId, addOns);
+
+    setItems((prev) => {
+      const existing = prev.find((p) => p.key === key);
+      if (existing) {
+        return prev.map((p) =>
+          p.key === key ? { ...p, quantity: p.quantity + 1 } : p
+        );
+      }
+      return [
+        ...prev,
+        {
+          key,
+          id,
+          name: product.name,
+          category: product.category,
+          sizeId: sizeId || null,
+          sizeLabel: sizeLabel || null,
+          addOns,
+          unitPrice: pricePerUnit,
+          quantity: 1
+        }
+      ];
+    });
+  };
+
+  const removeItem = (key) => {
+    setItems((prev) => prev.filter((p) => p.key !== key));
+  };
+
+  const updateQuantity = (key, quantity) => {
+    if (quantity <= 0) {
+      removeItem(key);
+      return;
+    }
+    setItems((prev) =>
+      prev.map((p) => (p.key === key ? { ...p, quantity } : p))
+    );
+  };
+
+  const clearCart = () => setItems([]);
+
+  const totals = useMemo(() => {
+    const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
+    const totalPrice = items.reduce(
+      (acc, item) => acc + item.quantity * item.unitPrice,
+      0
+    );
+    return { totalItems, totalPrice };
+  }, [items]);
+
+  const value = {
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    totals
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart() {
+  return useContext(CartContext);
+}
+```
+
+> ⚠️ Note: `removeItem` / `updateQuantity` now use the `key` (unique per configuration), not just `id`.
+
+---
+
+## 3) `src/components/ItemCustomizerModal.js` – NEW file
+
+This modal lets the user pick size and add-ons and shows live price.
+
+```js
+// src/components/ItemCustomizerModal.js
+import React, { useEffect, useMemo, useState } from "react";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import Badge from "react-bootstrap/Badge";
+
+function ItemCustomizerModal({ show, onHide, item, onAdd }) {
+  const [selectedSizeId, setSelectedSizeId] = useState(null);
+  const [selectedAddOnIds, setSelectedAddOnIds] = useState([]);
+
+  useEffect(() => {
+    if (item) {
+      // default to first size if available
+      if (item.sizes && item.sizes.length > 0) {
+        setSelectedSizeId(item.sizes[0].id);
+      } else {
+        setSelectedSizeId(null);
+      }
+      setSelectedAddOnIds([]);
+    }
+  }, [item]);
+
+  const selectedAddOns = useMemo(() => {
+    if (!item || !item.addOns) return [];
+    return item.addOns.filter((a) => selectedAddOnIds.includes(a.id));
+  }, [item, selectedAddOnIds]);
+
+  const unitPrice = useMemo(() => {
+    if (!item) return 0;
+    let base = item.price;
+    if (item.sizes && selectedSizeId) {
+      const size = item.sizes.find((s) => s.id === selectedSizeId);
+      if (size) base += size.priceModifier || 0;
+    }
+    const addOnsTotal = selectedAddOns.reduce(
+      (sum, a) => sum + (a.price || 0),
+      0
+    );
+    return base + addOnsTotal;
+  }, [item, selectedSizeId, selectedAddOns]);
+
+  if (!item) return null;
+
+  const handleToggleAddOn = (id) => {
+    setSelectedAddOnIds((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    );
+  };
+
+  const handleAdd = () => {
+    const sizeDef =
+      item.sizes && selectedSizeId
+        ? item.sizes.find((s) => s.id === selectedSizeId)
+        : null;
+
+    onAdd({
+      sizeId: sizeDef ? sizeDef.id : null,
+      sizeLabel: sizeDef ? sizeDef.label : null,
+      addOns: selectedAddOns,
+      unitPrice
+    });
+    onHide();
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton className="bg-dark text-light">
+        <Modal.Title>
+          Customize {item.name}{" "}
+          <Badge bg="secondary" className="ms-2">
+            {item.category}
+          </Badge>
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="bg-dark text-light">
+        <p className="small text-muted mb-3">{item.description}</p>
+
+        {item.sizes && item.sizes.length > 0 && (
+          <div className="mb-3">
+            <Form.Label className="fw-semibold">Size</Form.Label>
+            <div className="d-flex flex-wrap gap-2">
+              {item.sizes.map((size) => (
+                <Button
+                  key={size.id}
+                  variant={
+                    selectedSizeId === size.id ? "warning" : "outline-light"
+                  }
+                  size="sm"
+                  onClick={() => setSelectedSizeId(size.id)}
+                  className="btn-coffee-outline"
+                >
+                  {size.label}
+                  {size.priceModifier > 0 && (
+                    <span className="ms-1">
+                      (+${size.priceModifier.toFixed(2)})
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {item.addOns && item.addOns.length > 0 && (
+          <div className="mb-3">
+            <Form.Label className="fw-semibold">Add-ons</Form.Label>
+            <div className="d-flex flex-column gap-1">
+              {item.addOns.map((addOn) => (
+                <Form.Check
+                  key={addOn.id}
+                  type="checkbox"
+                  id={`addon-${item.id}-${addOn.id}`}
+                  label={
+                    <>
+                      {addOn.label}{" "}
+                      {addOn.price > 0 ? (
+                        <span className="text-muted">
+                          (+${addOn.price.toFixed(2)})
+                        </span>
+                      ) : (
+                        <span className="text-muted">(free)</span>
+                      )}
+                    </>
+                  }
+                  checked={selectedAddOnIds.includes(addOn.id)}
+                  onChange={() => handleToggleAddOn(addOn.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <span className="small text-muted">
+            Price per drink with options:
+          </span>
+          <span className="fw-bold fs-5">${unitPrice.toFixed(2)}</span>
+        </div>
+      </Modal.Body>
+      <Modal.Footer className="bg-dark">
+        <Button variant="secondary" onClick={onHide}>
+          Cancel
+        </Button>
+        <Button className="btn-coffee-primary" onClick={handleAdd}>
+          Add to order
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
+export default ItemCustomizerModal;
+```
+
+---
+
+## 4) `src/components/MenuGrid.js` – open the customizer modal
+
+We now show a **Customize & add** button that opens the modal, instead of directly calling `addItem(id)`.
+
+```js
+// src/components/MenuGrid.js
+import React, { useMemo, useState } from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Card from "react-bootstrap/Card";
+import Button from "react-bootstrap/Button";
+import Badge from "react-bootstrap/Badge";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
+import ToggleButton from "react-bootstrap/ToggleButton";
+import menuData from "../data/menu";
+import { useCart } from "../context/CartContext";
+import ItemCustomizerModal from "./ItemCustomizerModal";
+
+function MenuGrid({ showCategoryFilter = true, limit }) {
+  const [category, setCategory] = useState("All");
+  const [activeItem, setActiveItem] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const { addItem } = useCart();
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(menuData.map((m) => m.category)))],
+    []
+  );
+
+  const filtered = useMemo(
+    () =>
+      menuData.filter(
+        (item) => category === "All" || item.category === category
+      ),
+    [category]
+  );
+
+  const visibleItems = limit ? filtered.slice(0, limit) : filtered;
+
+  const handleOpenCustomize = (item) => {
+    setActiveItem(item);
+    setShowModal(true);
+  };
+
+  const handleAddFromModal = (config) => {
+    if (!activeItem) return;
+    addItem(activeItem.id, config);
+  };
+
+  return (
+    <>
+      <section className="mt-4">
+        {showCategoryFilter && (
+          <div className="mb-3 d-flex flex-wrap gap-2">
+            <ButtonGroup>
+              {categories.map((cat) => (
+                <ToggleButton
+                  key={cat}
+                  id={`cat-${cat}`}
+                  type="radio"
+                  variant={cat === category ? "warning" : "outline-light"}
+                  name="categories"
+                  value={cat}
+                  checked={cat === category}
+                  onChange={(e) => setCategory(e.currentTarget.value)}
+                  size="sm"
+                >
+                  {cat}
+                </ToggleButton>
+              ))}
+            </ButtonGroup>
+          </div>
+        )}
+
+        <Row className="g-4">
+          {visibleItems.map((item) => (
+            <Col md={6} lg={4} key={item.id}>
+              <Card className="menu-card h-100 text-light">
+                <Card.Img src={item.image} alt={item.name} />
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <Card.Title className="fs-5">{item.name}</Card.Title>
+                    <span className="menu-price">
+                      from ${item.price.toFixed(2)}
+                    </span>
+                  </div>
+                  <Card.Text className="mb-2" style={{ color: "#f6e5d6b3" }}>
+                    {item.description}
+                  </Card.Text>
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    {item.tags?.map((tag) => (
+                      <span className="menu-chip" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                    <Badge bg="dark" className="border badge-soft">
+                      {item.category}
+                    </Badge>
+                  </div>
+                  <Button
+                    className="btn-coffee-primary w-100"
+                    onClick={() => handleOpenCustomize(item)}
+                  >
+                    Customize &amp; add
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+
+        {visibleItems.length === 0 && (
+          <p className="mt-3 text-muted">No drinks in this category yet.</p>
+        )}
+      </section>
+
+      <ItemCustomizerModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        item={activeItem}
+        onAdd={handleAddFromModal}
+      />
+    </>
+  );
+}
+
+export default MenuGrid;
+```
+
+---
+
+## 5) `src/components/CartSummary.js` – show chosen size & add-ons
+
+Update to use `item.key` and display options.
+
+```js
+// src/components/CartSummary.js
+import React from "react";
+import Table from "react-bootstrap/Table";
+import Button from "react-bootstrap/Button";
+import { useCart } from "../context/CartContext";
+
+function CartSummary() {
+  const { items, updateQuantity, removeItem, totals } = useCart();
+
+  if (items.length === 0) {
+    return (
+      <div className="p-3 border rounded" style={{ borderColor: "#3a2519" }}>
+        <p className="mb-0 text-muted">
+          Your cart is empty. Add drinks from the menu to start an order.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 border rounded" style={{ borderColor: "#3a2519" }}>
+      <h5 className="mb-3">Your drinks</h5>
+      <Table borderless size="sm" className="align-middle text-light mb-3">
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.key}>
+              <td style={{ minWidth: "140px" }}>
+                <div className="fw-semibold">{item.name}</div>
+                <div className="small text-muted">{item.category}</div>
+                {item.sizeLabel && (
+                  <div className="small text-muted">
+                    Size: <span className="text-light">{item.sizeLabel}</span>
+                  </div>
+                )}
+                {item.addOns && item.addOns.length > 0 && (
+                  <div className="small text-muted">
+                    Add-ons:{" "}
+                    <span className="text-light">
+                      {item.addOns.map((a) => a.label).join(", ")}
+                    </span>
+                  </div>
+                )}
+              </td>
+              <td className="small" style={{ width: "120px" }}>
+                <div className="d-flex align-items-center gap-2">
+                  <Button
+                    variant="outline-light"
+                    size="sm"
+                    className="btn-coffee-outline"
+                    onClick={() =>
+                      updateQuantity(item.key, item.quantity - 1)
+                    }
+                  >
+                    −
+                  </Button>
+                  <span>{item.quantity}</span>
+                  <Button
+                    variant="outline-light"
+                    size="sm"
+                    className="btn-coffee-outline"
+                    onClick={() =>
+                      updateQuantity(item.key, item.quantity + 1)
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
+              </td>
+              <td className="text-end small">
+                ${(item.unitPrice * item.quantity).toFixed(2)}
+                <div className="text-muted">
+                  <small>${item.unitPrice.toFixed(2)} / unit</small>
+                </div>
+              </td>
+              <td className="text-end" style={{ width: "40px" }}>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-danger text-decoration-none"
+                  onClick={() => removeItem(item.key)}
+                >
+                  ✕
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+      <div className="d-flex justify-content-between align-items-center">
+        <span className="small text-muted">
+          {totals.totalItems} item(s) in cart
+        </span>
+        <span className="fw-semibold fs-5">
+          Total: ${totals.totalPrice.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default CartSummary;
+```
+
+---
+
+## 6) (Optional) small README note
+
+In `README.md`, you can add a short section like:
+
+```md
+### Item customization (sizes & add-ons)
+
+Each drink can define:
+
+- `sizes`: array of `{ id, label, priceModifier }`
+- `addOns`: array of `{ id, label, price }`
+
+These are configured in `src/data/menu.js`.
+
+When the user clicks **“Customize & add”** on a menu item:
+
+1. A modal opens where they select size and add-ons.
+2. The final **unit price** is calculated as:
+   - `base price + size.priceModifier + sum(addOn.price)`
+3. The selection (size + add-ons) is stored as a distinct cart line.  
+   For example, a Vanilla Latte (Medium with extra shot) is separate from a Vanilla Latte (Large with no add-ons).
+```
+
+
+
+
