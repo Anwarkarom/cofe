@@ -1,4 +1,5 @@
 {
+  "homepage": "https://Anwarkarom.github.io/cofe/",
   "name": "coffeeagadir-delivery",
   "version": "1.0.0",
   "private": true,
@@ -11,6 +12,8 @@
     "react-scripts": "^0.0.0"
   },
   "scripts": {
+    "predeploy": "npm run build",
+      "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
